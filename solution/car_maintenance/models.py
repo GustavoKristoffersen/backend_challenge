@@ -11,7 +11,7 @@ class Car(models.Model):
         return f'{(self.gas_capacity * 100) / self.gas_count_liters}%'
 
     @classmethod
-    def createCar(cls, gas_capacity):
+    def createCar(cls, gas_capacity=None):
         """
         Creates a new instance of a car.
 
@@ -19,9 +19,13 @@ class Car(models.Model):
         :return: the instance of the car created.
         """
 
-        car = cls.objects.create(gas_capacity=gas_capacity)
+        if gas_capacity:
+            car = cls.objects.create(gas_capacity=gas_capacity)
+        else:
+            car = cls.objects.create()
+            
         for x in range(4):
-            tyre = Tyre.objects.create(car=car)
+            tyre = Tyre.createTyre(car=car)
         
         return car
 
