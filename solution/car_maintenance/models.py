@@ -23,7 +23,22 @@ class Car(models.Model):
         for x in range(4):
             tyre = Tyre.objects.create(car=car)
         
-        return car     
+        return car
+
+    
+    def refuel(self, gas_quantity):
+        """
+        Refuel the car gas.
+
+        :param float: the quantity in liters of gas to be refuled.
+        :return: the current gas count of the car in %.
+        :raises: ValidationError: if the gas quantity passed surpasses the limit supported by the car.
+        """
+
+        if gas_quantity + self.gas_count_liters <= self.gas_capacity:
+            self.gas_count_liters += gas_quantity
+            return self.gas_count_percentage
+        return ValidationError(message='Number of gas quantity to refuel surpasses the limit supported by the car')
 
     
 class Tyre(models.Model):
