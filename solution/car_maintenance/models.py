@@ -4,7 +4,23 @@ from django.db import models
 class Car(models.Model):
     id = models.AutoField(primary_key=True)
     gas_capacity = models.FloatField(default=100)
-    gas_count = models.FloatField(default=0)
+    gas_count = models.FloatField(default=100)
+
+    @classmethod
+    def createCar(cls, gas_capacity):
+        """
+        Creates a new instance of a car.
+
+        :param float: the gas capacity of the car in liter.
+        :return: the instance of the car created.
+        """
+        
+        car = cls.objects.create(gas_capacity=gas_capacity)
+        for x in range(4):
+            tyre = Tyre.objects.create(car=car)
+        
+        return car
+
     
 class Tyre(models.Model):
     id = models.AutoField(primary_key=True)
