@@ -8,7 +8,9 @@ class Car(models.Model):
 
     @property
     def gas_count_percentage(self,):
-        return f'{(self.gas_capacity * 100) / self.gas_count}%'
+        if self.gas_capacity == 0:
+            return 0
+        return (self.gas_count * 100) / self.gas_capacity
 
     @classmethod
     def createCar(cls, gas_capacity=None):
@@ -41,13 +43,13 @@ class Car(models.Model):
         """
 
         if gas_quantity + self.gas_count <= self.gas_capacity:
-            if (self.gas_capacity * 100) / self.gas_count < 5:
+            if self.gas_count_percentage < 5:
                 self.gas_count += gas_quantity
                 return self.gas_count_percentage
             return ValidationError(message='The ccurrent gas count must be less than 5% before refueling')
         return ValidationError(message='Number of gas quantity to refuel surpasses the limit supported by the car')
 
-    
+
 class Tyre(models.Model):
     id = models.AutoField(primary_key=True)
     degradation = models.FloatField(default=0)
