@@ -37,11 +37,14 @@ class Car(models.Model):
         :param float: the quantity in liters of gas to be refuled.
         :return: the current gas count of the car in %.
         :raises: ValidationError: if the gas quantity passed surpasses the limit supported by the car.
+        :raises: ValidationError: if the car current gas count is higher than 5%.
         """
 
         if gas_quantity + self.gas_count_liters <= self.gas_capacity:
-            self.gas_count_liters += gas_quantity
-            return self.gas_count_percentage
+            if (self.gas_capacity * 100) / self.gas_count_liters < 5:
+                self.gas_count_liters += gas_quantity
+                return self.gas_count_percentage
+            return ValidationError(message='The ccurrent gas count must be less than 5% before refueling')
         return ValidationError(message='Number of gas quantity to refuel surpasses the limit supported by the car')
 
     
