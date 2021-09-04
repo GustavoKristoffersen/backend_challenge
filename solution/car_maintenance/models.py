@@ -68,3 +68,14 @@ class Tyre(models.Model):
         if car.tyres.count() < 4:
             return cls.objects.create(car=car)
         raise ValidationError(message='Car instance exceeded the maximum limit of tyres')
+
+    def degradate(self,):
+        """
+        Deagradates the current tyre by 1%.
+
+        :return: None
+        :raises: ValidationError: if the tyre degradation is already at 100%.
+        """
+        if self.degradation < 100:
+            self.degradation += 1
+        return ValidationError(message='The tyre has already reached its maximum degradation of 100%')
