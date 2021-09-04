@@ -4,11 +4,11 @@ from django.db import models
 class Car(models.Model):
     id = models.AutoField(primary_key=True)
     gas_capacity = models.FloatField(default=100)
-    gas_count_liters = models.FloatField(default=100)
-    
+    gas_count = models.FloatField(default=100)
+
     @property
     def gas_count_percentage(self,):
-        return f'{(self.gas_capacity * 100) / self.gas_count_liters}%'
+        return f'{(self.gas_capacity * 100) / self.gas_count}%'
 
     @classmethod
     def createCar(cls, gas_capacity=None):
@@ -20,7 +20,7 @@ class Car(models.Model):
         """
 
         if gas_capacity:
-            car = cls.objects.create(gas_capacity=gas_capacity)
+            car = cls.objects.create(gas_capacity=gas_capacity, gas_count=gas_capacity)
         else:
             car = cls.objects.create()
             
@@ -40,9 +40,9 @@ class Car(models.Model):
         :raises: ValidationError: if the car current gas count is higher than 5%.
         """
 
-        if gas_quantity + self.gas_count_liters <= self.gas_capacity:
-            if (self.gas_capacity * 100) / self.gas_count_liters < 5:
-                self.gas_count_liters += gas_quantity
+        if gas_quantity + self.gas_count <= self.gas_capacity:
+            if (self.gas_capacity * 100) / self.gas_count < 5:
+                self.gas_count += gas_quantity
                 return self.gas_count_percentage
             return ValidationError(message='The ccurrent gas count must be less than 5% before refueling')
         return ValidationError(message='Number of gas quantity to refuel surpasses the limit supported by the car')
