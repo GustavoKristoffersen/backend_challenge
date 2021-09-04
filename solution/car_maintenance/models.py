@@ -17,7 +17,7 @@ class Car(models.Model):
         """
         Creates a new instance of a car.
 
-        :param float: the gas capacity of the car in liter.
+        :param float gas_capacity: the gas capacity of the car in liters.
         :return: the instance of the car created.
         """
 
@@ -53,11 +53,11 @@ class Car(models.Model):
         """
         Swap a tyre that is degradated for a new one.
 
-        :param tyre: a tyre which needs to be replaced.
+        :param Tyre tyre: a tyre which needs to be replaced.
         :return: the car instance.
         :raises: ValidationError: if the tyre's degradation is not higher than 94%.
         """
-        
+
         if tyre.degradation > 94:
             tyre.delete()
             Tyre.createTyre(car=self)
@@ -76,7 +76,7 @@ class Tyre(models.Model):
         """
         Creates a new tyre and adds it to an instance of car.
 
-        :param car: a car instance to which the tyre is going to be added.
+        :param Car car: a car instance to which the tyre is going to be added.
         :return: the instance of the tyre created.
         :raises: ValidationError: if the car already has 4 tyres.
         """
@@ -87,7 +87,7 @@ class Tyre(models.Model):
 
     def degradate(self,):
         """
-        Deagradates the current tyre by 1%.
+        Degradates the current tyre by 1%.
 
         :return: None
         :raises: ValidationError: if the tyre degradation is already at 100%.
