@@ -49,6 +49,22 @@ class Car(models.Model):
             return ValidationError(message='The ccurrent gas count must be less than 5% before refueling')
         return ValidationError(message='Number of gas quantity to refuel surpasses the limit supported by the car')
 
+    def maintenance(self, tyre):
+        """
+        Swap a tyre that is degradated for a new one.
+
+        :param tyre: a tyre which needs to be replaced.
+        :return: the car instance.
+        :raises: ValidationError: if the tyre's degradation is not higher than 94%.
+        """
+        
+        if tyre.degradation > 94:
+            tyre.delete()
+            Tyre.createTyre(car=self)
+
+            return self
+        return ValidationError(message="the tyre's degradation must be higher than 94%")        
+
 
 class Tyre(models.Model):
     id = models.AutoField(primary_key=True)
