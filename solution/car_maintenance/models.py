@@ -56,10 +56,10 @@ class Car(models.Model):
 
                 return self.gas_count_percentage
 
-            return ValidationError(
+            raise ValidationError(
                 message="The ccurrent gas count must be less than 5% before refueling"
             )
-        return ValidationError(
+        raise ValidationError(
             message="Number of gas quantity to refuel surpasses the limit supported by the car"
         )
 
@@ -123,13 +123,11 @@ class Car(models.Model):
             for tyre in self.tyres.all():
                 if tyre.degradation > 75:
                     raise ValidationError(
-                        "Some tyres are with 75% of degradation, it's recomended to swap them as soon as possible",
-                        code=400,
+                        "Some tyres are with 75% of degradation, it's recomended to swap them as soon as possible"
                     )
             if self.gas_count_percentage < 5:
                 raise ValidationError(
-                    "The current gas is less than 5%, it's recomended to refuel the car as soon as possible",
-                    code=401,
+                    "The current gas is less than 5%, it's recomended to refuel the car as soon as possible"
                 )
 
             trip.distance_travelled += 1

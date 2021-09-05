@@ -22,11 +22,17 @@ class CarViewSet(ModelViewSet):
             return Response(data=serializer.data, status=status.HTTP_201_CREATED)
 
         except ValidationError as e:
-            return Response({
-                'warning': {
-                    'code': e.code,
-                    'msg': e.message
-                }
-            }, status=status.HTTP_400_BAD_REQUEST)
-
+            return Response({'warning': {'message': e.message}}, status=status.HTTP_400_BAD_REQUEST)
     
+    @action(methods=['POST'], detail=True)
+    def refuel(self, request, id, *args, **kwargs):
+        car = Car.objects.get(id=id)
+        gas = int(request.query_params.get('gas'))
+
+        try:
+            car.refuel(gas)
+        except ValidationError as e:
+            return Response(data={'error': {'message': e.message}}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = CarSerializer(car) 
+        return Response(data=serializer.data, status=status.HTTP_201_CREATED)
