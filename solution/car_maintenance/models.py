@@ -51,7 +51,7 @@ class Car(models.Model):
 
     def maintenance(self, tyre):
         """
-        Swap a tyre that is degradated for a new one.
+        Swap a tyre that is degraded for a new one.
 
         :param Tyre tyre: a tyre which needs to be replaced.
         :return: the car instance.
@@ -85,9 +85,9 @@ class Tyre(models.Model):
             return cls.objects.create(car=car)
         raise ValidationError(message='Car instance exceeded the maximum limit of tyres')
 
-    def degradate(self,):
+    def degrade(self,):
         """
-        Degradates the current tyre by 1%.
+        degrades the current tyre by 1%.
 
         :return: None
         :raises: ValidationError: if the tyre degradation is already at 100%.
