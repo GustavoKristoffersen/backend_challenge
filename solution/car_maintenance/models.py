@@ -52,7 +52,10 @@ class Car(models.Model):
         if gas_quantity + self.gas_count <= self.gas_capacity:
             if self.gas_count_percentage < 5:
                 self.gas_count += gas_quantity
+                self.save()
+
                 return self.gas_count_percentage
+
             return ValidationError(message='The ccurrent gas count must be less than 5% before refueling')
         return ValidationError(message='Number of gas quantity to refuel surpasses the limit supported by the car')
 
@@ -73,31 +76,61 @@ class Car(models.Model):
         return ValidationError(message="the tyre's degradation must be higher than 94%")
 
 
-    # def trip(self, distance):
-    #     """
-    #     Performs a trip.
+    def trip(self, distance=None):
+        """
+        Performs a trip.
 
-    #     :param float int: the distance of the trip in Km.
-    #     :return: the car instance
-    #     """
-    #     distance_counter = 0
+        :param int distance: the distance of the trip in Km.
+        :return: the car instance.
+        """
 
-    #     while distance_counter < distance:
-    #         if isinstance(distance_counter / 8, int):
-    #             self.gas_count -= 1
+        trip = None
 
-    #         if isinstance(distance_counter / 3, int):
-    #             for tyre in self.tyres.all():
-    #                 tyre.degrade()
-    #                 if tyre.degradation > 94:
-    #                     raise 
+        #Checks whether this is a new trip or a continuation of the last one
+        is_new_trip = True
+        for t in self.trips.all():
+            if t.finished == False:
+                is_new_trip = False
+                trip = t
+                break
 
-    #         if self.gas_count == 0:
-    #             break
-            
-    #         distance_counter += 1
+        if is_new_trip:
+            trip = Trip.objects.create(distance=distance, car=self)
         
-    #     return self
+        #Starts trip
+        has_degraded_tyres = False
+        while trip.distance_travelled < trip.distance:
+            print(trip.distance_travelled)
+            if (trip.distance_travelled / 8).is_integer():
+                print('entrou')
+                self.gas_count -= 1
+
+            if (trip.distance_travelled / 3).is_integer():
+                for tyre in self.tyres.all():
+                    tyre.degrade()
+                    if tyre.degradation > 94:
+                        has_degraded_tyres = True
+            
+            #Stop the trip
+            if has_degraded_tyres:
+                break
+            if self.gas_count == 0:
+                break
+
+            #raise warnings
+            for tyre in self.tyres.all():
+                if tyre.degradation > 75:
+                    raise Exception("Some tyres are with 75% of degradation, it's recomended to swap them as soon as possible")    
+            if self.gas_count_percentage < 5:
+                raise Exception("The current gas is less than 5%, it's recomended to refuel the car as soon as possible")
+            
+            trip.distance_travelled += 1
+        
+        trip.finished = True
+        trip.save()
+        self.save()
+
+        return self.status
 
 
 class Tyre(models.Model):
@@ -135,12 +168,13 @@ class Tyre(models.Model):
         """
         if self.degradation < 100:
             self.degradation += 1
+            self.save()
         return ValidationError(message='The tyre has already reached its maximum degradation of 100%')
 
 class Trip(models.Model):
     id = models.AutoField(primary_key=True)
     distance = models.FloatField()
-    distance_travelled = models.FloatField()
+    distance_travelled = models.FloatField(default=0)
     finished = models.BooleanField(default=False)
     car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name='trips')
 
