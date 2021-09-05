@@ -12,22 +12,27 @@ class Car(models.Model):
             return 0
         return (self.gas_count * 100) / self.gas_capacity
 
+    @property
+    def status(self,):
+        return {
+            'id': self.id,
+            'gas_count_percentage': f'{self.gas_count_percentage}%',
+            'gas_count_liters': self.gas_count,
+            'tyres': [tyre.status for tyre in self.tyres.all()],
+        }
+
     @classmethod
-    def createCar(cls, gas_capacity=None):
+    def createCar(cls):
         """
         Creates a new instance of a car.
 
-        :param float gas_capacity: the gas capacity of the car in liters.
         :return: the instance of the car created.
         """
 
-        if gas_capacity:
-            car = cls.objects.create(gas_capacity=gas_capacity, gas_count=gas_capacity)
-        else:
-            car = cls.objects.create()
-            
+        car = cls.objects.create()
+        
         for x in range(4):
-            tyre = Tyre.createTyre(car=car)
+            Tyre.createTyre(car=car)
         
         return car
 
@@ -63,13 +68,47 @@ class Car(models.Model):
             Tyre.createTyre(car=self)
 
             return self
-        return ValidationError(message="the tyre's degradation must be higher than 94%")        
+        return ValidationError(message="the tyre's degradation must be higher than 94%")
+
+
+    # def trip(self, distance):
+    #     """
+    #     Performs a trip.
+
+    #     :param float int: the distance of the trip in Km.
+    #     :return: the car instance
+    #     """
+    #     distance_counter = 0
+
+    #     while distance_counter < distance:
+    #         if isinstance(distance_counter / 8, int):
+    #             self.gas_count -= 1
+
+    #         if isinstance(distance_counter / 3, int):
+    #             for tyre in self.tyres.all():
+    #                 tyre.degrade()
+    #                 if tyre.degradation > 94:
+    #                     raise 
+
+    #         if self.gas_count == 0:
+    #             break
+            
+    #         distance_counter += 1
+        
+    #     return self
 
 
 class Tyre(models.Model):
     id = models.AutoField(primary_key=True)
     degradation = models.FloatField(default=0)
     car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name='tyres')
+
+    @property
+    def status(self,):
+        return {
+            'id': self.id,
+            'degradation': f'{self.degradation}%',
+        }
     
     @classmethod
     def createTyre(cls, car):
