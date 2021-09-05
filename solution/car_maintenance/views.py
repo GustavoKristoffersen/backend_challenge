@@ -5,7 +5,7 @@ from rest_framework.decorators import action
 from rest_framework import status
 
 from car_maintenance.models import Car, Tyre
-from car_maintenance.serializers import CarSerializer
+from car_maintenance.serializers import CarSerializer, TyreSerializer
 
 class CarViewSet(ModelViewSet):
     lookup_field = 'id'
@@ -13,9 +13,9 @@ class CarViewSet(ModelViewSet):
     queryset = Car.objects.all()
 
     def create(self, request, *args, **kwargs):
-        car = Car.createCar()
+        car = Car.objects.create()
         serializer = CarSerializer(car)
-        
+
         return Response(data=serializer.data, status=status.HTTP_201_CREATED)
 
     @action(methods=['POST'], detail=True)
@@ -27,6 +27,10 @@ class CarViewSet(ModelViewSet):
             serializer = CarSerializer(car)
 
             return Response(data=serializer.data, status=status.HTTP_201_CREATED)
+        
+        except Exception as e:
+            print(e)
+            return Response({'error': {'message': str(e)}}, status=status.HTTP_400_BAD_REQUEST)
 
         except ValidationError as e:
             return Response({'warning': {'message': e.message}}, status=status.HTTP_400_BAD_REQUEST)
@@ -42,6 +46,7 @@ class CarViewSet(ModelViewSet):
             return Response(data={'error': {'message': e.message}}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = CarSerializer(car)
+
         return Response(data=serializer.data, status=status.HTTP_201_CREATED)
     
     @action(methods=['POST'], detail=True)
@@ -60,4 +65,15 @@ class CarViewSet(ModelViewSet):
         
         serializer = CarSerializer(car)
 
+        return Response(data=serializer.data, status=status.HTTP_201_CREATED)
+    
+    @action(methods=['POST'], detail=True, url_path='create-tyre')
+    def create_tyre(self, request, id, *args, **kwargs):
+        car = Car.objects.get(id=id)
+        try:
+            tyre = Tyre.createTyre(car)
+        except ValidationError as e:
+            return Response(data={'error': {'message': e.message}}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = TyreSerializer(tyre)
         return Response(data=serializer.data, status=status.HTTP_201_CREATED)

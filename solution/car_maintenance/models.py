@@ -14,30 +14,10 @@ class Car(models.Model):
         return (self.gas_count * 100) / self.gas_capacity
 
     @property
-    def status(self):
-        return {
-            "id": self.id,
-            "gas_count_percentage": f"{self.gas_count_percentage}%",
-            "gas_count_liters": self.gas_count,
-            "tyres": [tyre.status for tyre in self.tyres.all()],
-            "trips": [trip.status for trip in self.trips.all()],
-            "maintenances": [mt.status for mt in self.maintenances.all()],
-        }
-
-    @classmethod
-    def createCar(cls):
-        """
-        Creates a new instance of a car.
-
-        :return: the instance of the car created.
-        """
-
-        car = cls.objects.create()
-
-        for x in range(4):
-            Tyre.createTyre(car=car)
-
-        return car
+    def can_trip(self):
+        if self.tyres.count() == 4 and self.gas_count > 0:
+            return True
+        return False
 
     def refuel(self, gas_quantity):
         """
@@ -88,8 +68,11 @@ class Car(models.Model):
         :return: the car instance.
         """
 
-        trip = None
+        #Checks if the car can travel
+        if not self.can_trip:
+            raise Exception('The car is not in condition to travel. Make sure that it has 4 tyres and gas > 0')
 
+        trip = None
         # Checks whether this is a new trip or a continuation of the last one
         is_new_trip = True
         for t in self.trips.all():
@@ -137,7 +120,7 @@ class Car(models.Model):
         trip.finished = True
         trip.save()
 
-        return self.status
+        return self
 
 
 class Tyre(models.Model):
@@ -148,13 +131,6 @@ class Tyre(models.Model):
     @property
     def degradation_percentage(self):
         return self.degradation
-
-    @property
-    def status(self):
-        return {
-            "id": self.id,
-            "degradation": f"{self.degradation}%",
-        }
 
     @classmethod
     def createTyre(cls, car):
@@ -194,21 +170,8 @@ class Trip(models.Model):
     finished = models.BooleanField(default=False)
     car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name="trips")
 
-    @property
-    def status(self):
-        return {
-            "id": self.id,
-            "distance": self.distance,
-            "distance_travelled": self.distance_travelled,
-            "finished": self.finished,
-        }
-
 
 class Maintenance(models.Model):
     id = models.AutoField(primary_key=True)
     car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name="maintenances")
     date = models.DateTimeField(auto_now_add=True)
-
-    @property
-    def status(self):
-        return {"id": self.id, "date": self.date}
