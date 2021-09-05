@@ -20,6 +20,7 @@ class Car(models.Model):
             'gas_count_liters': self.gas_count,
             'tyres': [tyre.status for tyre in self.tyres.all()],
             'trips': [trip.status for trip in self.trips.all()],
+            'maintenances': [mt.status for mt in self.maintenances.all()]
         }
 
     @classmethod
@@ -150,4 +151,16 @@ class Trip(models.Model):
             'distance': self.distance,
             'distance_travelled': self.distance_travelled,
             'finished': self.finished
+        }
+
+class Maintenance(models.Model):
+    id = models.AutoField(primary_key=True)
+    car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name='maintenances')
+    date = models.DateTimeField(auto_now_add=True)
+
+    @property
+    def status(self,):
+        return {
+            'id': self.id,
+            'date': self.date
         }
