@@ -14,7 +14,7 @@ class MaintenanceSerializer(serializers.ModelSerializer):
 class TyreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tyre
-        exclude = ['car']
+        fields = ['id', 'degradation_percentage']
 
 class CarSerializer(serializers.ModelSerializer):
     tyres = TyreSerializer(many=True)

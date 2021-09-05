@@ -138,6 +138,10 @@ class Tyre(models.Model):
     car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name='tyres')
 
     @property
+    def degradation_percentage(self,):
+        return self.degradation
+
+    @property
     def status(self,):
         return {
             'id': self.id,
