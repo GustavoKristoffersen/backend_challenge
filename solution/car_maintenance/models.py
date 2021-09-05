@@ -71,6 +71,7 @@ class Car(models.Model):
         if tyre.degradation > 94:
             tyre.delete()
             Tyre.createTyre(car=self)
+            Maintenance.objects.create(car=self)
 
             return self
         return ValidationError(message="the tyre's degradation must be higher than 94%")
@@ -125,10 +126,10 @@ class Car(models.Model):
                 raise Exception("The current gas is less than 5%, it's recomended to refuel the car as soon as possible")
             
             trip.distance_travelled += 1
-        
+            trip.save()
+            self.save()
+
         trip.finished = True
-        trip.save()
-        self.save()
 
         return self.status
 
