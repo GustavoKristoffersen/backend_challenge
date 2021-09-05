@@ -19,6 +19,7 @@ class Car(models.Model):
             'gas_count_percentage': f'{self.gas_count_percentage}%',
             'gas_count_liters': self.gas_count,
             'tyres': [tyre.status for tyre in self.tyres.all()],
+            'trips': [trip.status for trip in self.trips.all()],
         }
 
     @classmethod
@@ -134,3 +135,19 @@ class Tyre(models.Model):
         if self.degradation < 100:
             self.degradation += 1
         return ValidationError(message='The tyre has already reached its maximum degradation of 100%')
+
+class Trip(models.Model):
+    id = models.AutoField(primary_key=True)
+    distance = models.FloatField()
+    distance_travelled = models.FloatField()
+    finished = models.BooleanField(default=False)
+    car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name='trips')
+
+    @property
+    def status(self,):
+        return {
+            'id': self.id,
+            'distance': self.distance,
+            'distance_travelled': self.distance_travelled,
+            'finished': self.finished
+        }
