@@ -12,6 +12,12 @@ class CarViewSet(ModelViewSet):
     serializer_class = CarSerializer
     queryset = Car.objects.all()
 
+    def create(self, request, *args, **kwargs):
+        car = Car.createCar()
+        serializer = CarSerializer(car)
+        
+        return Response(data=serializer.data, status=status.HTTP_201_CREATED)
+
     @action(methods=['POST'], detail=True)
     def trip(self, request, id, *args, **kwargs):
         distance = int(request.query_params.get('distance'))
@@ -19,6 +25,7 @@ class CarViewSet(ModelViewSet):
         try:
             car.trip(distance) if distance else car.trip()
             serializer = CarSerializer(car)
+
             return Response(data=serializer.data, status=status.HTTP_201_CREATED)
 
         except ValidationError as e:
@@ -52,4 +59,5 @@ class CarViewSet(ModelViewSet):
             return Response(data={'error': {'message': e.message}}, status=status.HTTP_400_BAD_REQUEST)
         
         serializer = CarSerializer(car)
+
         return Response(data=serializer.data, status=status.HTTP_201_CREATED)
