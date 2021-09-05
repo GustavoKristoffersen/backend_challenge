@@ -63,7 +63,7 @@ class Car(models.Model):
             message="Number of gas quantity to refuel surpasses the limit supported by the car"
         )
 
-    def maintenance(self, tyre):
+    def maintain(self, tyre):
         """
         Swap a tyre that is degraded for a new one.
 
@@ -110,7 +110,7 @@ class Car(models.Model):
             if (trip.distance_travelled / 3).is_integer():
                 for tyre in self.tyres.all():
                     tyre.degrade()
-                    if tyre.degradation > 94:
+                    if tyre.degradation >= 100:
                         has_degraded_tyres = True
 
             # Stop the trip
@@ -121,7 +121,7 @@ class Car(models.Model):
 
             # raise warnings
             for tyre in self.tyres.all():
-                if tyre.degradation > 75:
+                if tyre.degradation > 94:
                     raise ValidationError(
                         "Some tyres are with 75% of degradation, it's recomended to swap them as soon as possible"
                     )
