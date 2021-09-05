@@ -1,11 +1,29 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 
+#Constant variables
+
+#Average car capacity
+DEFAULT_GAS_CAPACITY = 55
+#If 3Km degrades 1% then 1Km degrades...
+DEFAULT_DEGRADATION_PER_KM = 0.33
+#If 8Km consumes 1 liter then 1Km consumes...
+DEFAULT_GAS_CONSUMPTION_PER_KM = 0.125
+#To be able to refuel the car gas must be less than...
+DEFAULT_CONDITION_TO_REFUEL = 5
+#To be able to swap a tyre, its degradation mus be higher than...
+DEFAULT_CONDITION_TO_SWAP_TYRE = 94
+#The system will raise a warning if the car's gas is less than...
+DEFAULT_GAS_WARNING = 5
+#The system will raise a warning if a tyre is with its degradation higher than...
+DEFAULT_TYRE_DEGRADATION_WARNING = 94
+
+
 
 class Car(models.Model):
     id = models.AutoField(primary_key=True)
-    gas_capacity = models.FloatField(default=100)
-    gas_count = models.FloatField(default=100)
+    gas_capacity = models.FloatField(default=DEFAULT_GAS_CAPACITY)
+    gas_count = models.FloatField(default=DEFAULT_GAS_CAPACITY)
 
     @property
     def gas_count_percentage(self):
@@ -20,21 +38,21 @@ class Car(models.Model):
         return False
 
     def refuel(self, gas_quantity):
-        """
+        f"""
         Refuel the car gas.
 
-        :param float: the quantity in liters of gas to be refuled.
-        :return: the current gas count of the car in %.
+        :param float: the quantity of gas to be refueled in liters.
+        :return: car instance
         :raises: ValidationError: if the gas quantity passed surpasses the limit supported by the car.
-        :raises: ValidationError: if the car current gas count is higher than 5%.
+        :raises: ValidationError: if the car current gas count is not less than {DEFAULT_CONDITION_TO_REFUEL}%.
         """
 
         if gas_quantity + self.gas_count <= self.gas_capacity:
-            if self.gas_count_percentage < 5:
+            if self.gas_count_percentage < DEFAULT_CONDITION_TO_REFUEL:
                 self.gas_count += gas_quantity
                 self.save()
 
-                return self.gas_count_percentage
+                return self
 
             raise ValidationError(
                 message="The ccurrent gas count must be less than 5% before refueling"
@@ -44,21 +62,21 @@ class Car(models.Model):
         )
 
     def maintain(self, tyre):
-        """
+        f"""
         Swap a tyre that is degraded for a new one.
 
         :param Tyre tyre: a tyre which needs to be replaced.
         :return: the car instance.
-        :raises: ValidationError: if the tyre's degradation is not higher than 94%.
+        :raises: ValidationError: if the tyre's degradation is not higher than {DEFAULT_CONDITION_TO_SWAP_TYRE}%.
         """
 
-        if tyre.degradation > 94:
+        if tyre.degradation > DEFAULT_CONDITION_TO_SWAP_TYRE:
             tyre.delete()
             Tyre.createTyre(car=self)
             Maintenance.objects.create(car=self)
 
             return self
-        return ValidationError(message="the tyre's degradation must be higher than 94%")
+        return ValidationError(message=f"the tyre's degradation must be higher than {DEFAULT_CONDITION_TO_SWAP_TYRE}%")
 
     def trip(self, distance=None):
         """
@@ -87,14 +105,6 @@ class Car(models.Model):
         # Starts trip
         has_degraded_tyres = False
         while trip.distance_travelled < trip.distance:
-            if (trip.distance_travelled / 8).is_integer():
-                self.gas_count -= 1
-
-            if (trip.distance_travelled / 3).is_integer():
-                for tyre in self.tyres.all():
-                    tyre.degrade()
-                    if tyre.degradation >= 100:
-                        has_degraded_tyres = True
 
             # Stop the trip
             if has_degraded_tyres:
@@ -104,14 +114,23 @@ class Car(models.Model):
 
             # raise warnings
             for tyre in self.tyres.all():
-                if tyre.degradation > 94:
+                if tyre.degradation > DEFAULT_TYRE_DEGRADATION_WARNING:
                     raise ValidationError(
-                        "Some tyres are with 75% of degradation, it's recomended to swap them as soon as possible"
+                        f"Some tyres are with more than {DEFAULT_TYRE_DEGRADATION_WARNING}% of degradation, it's recomended to swap them as soon as possible"
                     )
-            if self.gas_count_percentage < 5:
+            if self.gas_count_percentage < DEFAULT_GAS_WARNING:
                 raise ValidationError(
-                    "The current gas is less than 5%, it's recomended to refuel the car as soon as possible"
+                    f"The current gas is less than {DEFAULT_GAS_WARNING}%, it's recomended to refuel the car as soon as possible"
                 )
+            
+            self.gas_count -= DEFAULT_GAS_CONSUMPTION_PER_KM
+
+            for tyre in self.tyres.all():
+                tyre.degrade(
+                    DEFAULT_DEGRADATION_PER_KM
+                )
+                if tyre.degradation >= 100:
+                    has_degraded_tyres = True
 
             trip.distance_travelled += 1
             trip.save()
@@ -148,16 +167,18 @@ class Tyre(models.Model):
             message="Car instance exceeded the maximum limit of tyres"
         )
 
-    def degrade(self):
+    def degrade(self, quantity):
         """
-        degrades the current tyre by 1%.
+        degrades the current tyre by the passed value.
 
-        :return: None
+        :return: instance of tyre
         :raises: ValidationError: if the tyre degradation is already at 100%.
         """
         if self.degradation < 100:
-            self.degradation += 1
+            self.degradation += quantity
             self.save()
+            return self
+            
         return ValidationError(
             message="The tyre has already reached its maximum degradation of 100%"
         )
