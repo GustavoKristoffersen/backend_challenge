@@ -101,9 +101,7 @@ class Car(models.Model):
         #Starts trip
         has_degraded_tyres = False
         while trip.distance_travelled < trip.distance:
-            print(trip.distance_travelled)
             if (trip.distance_travelled / 8).is_integer():
-                print('entrou')
                 self.gas_count -= 1
 
             if (trip.distance_travelled / 3).is_integer():
