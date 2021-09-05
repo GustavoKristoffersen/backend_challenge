@@ -1,26 +1,27 @@
 from django.core.exceptions import ValidationError
 from django.db import models
 
+
 class Car(models.Model):
     id = models.AutoField(primary_key=True)
     gas_capacity = models.FloatField(default=100)
     gas_count = models.FloatField(default=100)
 
     @property
-    def gas_count_percentage(self,):
+    def gas_count_percentage(self):
         if self.gas_capacity == 0:
             return 0
         return (self.gas_count * 100) / self.gas_capacity
 
     @property
-    def status(self,):
+    def status(self):
         return {
-            'id': self.id,
-            'gas_count_percentage': f'{self.gas_count_percentage}%',
-            'gas_count_liters': self.gas_count,
-            'tyres': [tyre.status for tyre in self.tyres.all()],
-            'trips': [trip.status for trip in self.trips.all()],
-            'maintenances': [mt.status for mt in self.maintenances.all()]
+            "id": self.id,
+            "gas_count_percentage": f"{self.gas_count_percentage}%",
+            "gas_count_liters": self.gas_count,
+            "tyres": [tyre.status for tyre in self.tyres.all()],
+            "trips": [trip.status for trip in self.trips.all()],
+            "maintenances": [mt.status for mt in self.maintenances.all()],
         }
 
     @classmethod
@@ -32,13 +33,12 @@ class Car(models.Model):
         """
 
         car = cls.objects.create()
-        
+
         for x in range(4):
             Tyre.createTyre(car=car)
-        
+
         return car
 
-    
     def refuel(self, gas_quantity):
         """
         Refuel the car gas.
@@ -56,8 +56,12 @@ class Car(models.Model):
 
                 return self.gas_count_percentage
 
-            return ValidationError(message='The ccurrent gas count must be less than 5% before refueling')
-        return ValidationError(message='Number of gas quantity to refuel surpasses the limit supported by the car')
+            return ValidationError(
+                message="The ccurrent gas count must be less than 5% before refueling"
+            )
+        return ValidationError(
+            message="Number of gas quantity to refuel surpasses the limit supported by the car"
+        )
 
     def maintenance(self, tyre):
         """
@@ -76,7 +80,6 @@ class Car(models.Model):
             return self
         return ValidationError(message="the tyre's degradation must be higher than 94%")
 
-
     def trip(self, distance=None):
         """
         Performs a trip.
@@ -87,7 +90,7 @@ class Car(models.Model):
 
         trip = None
 
-        #Checks whether this is a new trip or a continuation of the last one
+        # Checks whether this is a new trip or a continuation of the last one
         is_new_trip = True
         for t in self.trips.all():
             if t.finished == False:
@@ -97,8 +100,8 @@ class Car(models.Model):
 
         if is_new_trip:
             trip = Trip.objects.create(distance=distance, car=self)
-        
-        #Starts trip
+
+        # Starts trip
         has_degraded_tyres = False
         while trip.distance_travelled < trip.distance:
             if (trip.distance_travelled / 8).is_integer():
@@ -109,25 +112,32 @@ class Car(models.Model):
                     tyre.degrade()
                     if tyre.degradation > 94:
                         has_degraded_tyres = True
-            
-            #Stop the trip
+
+            # Stop the trip
             if has_degraded_tyres:
                 break
             if self.gas_count == 0:
                 break
 
-            #raise warnings
+            # raise warnings
             for tyre in self.tyres.all():
                 if tyre.degradation > 75:
-                    raise Exception("Some tyres are with 75% of degradation, it's recomended to swap them as soon as possible")    
+                    raise ValidationError(
+                        "Some tyres are with 75% of degradation, it's recomended to swap them as soon as possible",
+                        code=400,
+                    )
             if self.gas_count_percentage < 5:
-                raise Exception("The current gas is less than 5%, it's recomended to refuel the car as soon as possible")
-            
+                raise ValidationError(
+                    "The current gas is less than 5%, it's recomended to refuel the car as soon as possible",
+                    code=401,
+                )
+
             trip.distance_travelled += 1
             trip.save()
             self.save()
 
         trip.finished = True
+        trip.save()
 
         return self.status
 
@@ -135,19 +145,19 @@ class Car(models.Model):
 class Tyre(models.Model):
     id = models.AutoField(primary_key=True)
     degradation = models.FloatField(default=0)
-    car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name='tyres')
+    car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name="tyres")
 
     @property
-    def degradation_percentage(self,):
+    def degradation_percentage(self):
         return self.degradation
 
     @property
-    def status(self,):
+    def status(self):
         return {
-            'id': self.id,
-            'degradation': f'{self.degradation}%',
+            "id": self.id,
+            "degradation": f"{self.degradation}%",
         }
-    
+
     @classmethod
     def createTyre(cls, car):
         """
@@ -160,9 +170,11 @@ class Tyre(models.Model):
 
         if car.tyres.count() < 4:
             return cls.objects.create(car=car)
-        raise ValidationError(message='Car instance exceeded the maximum limit of tyres')
+        raise ValidationError(
+            message="Car instance exceeded the maximum limit of tyres"
+        )
 
-    def degrade(self,):
+    def degrade(self):
         """
         degrades the current tyre by 1%.
 
@@ -172,32 +184,33 @@ class Tyre(models.Model):
         if self.degradation < 100:
             self.degradation += 1
             self.save()
-        return ValidationError(message='The tyre has already reached its maximum degradation of 100%')
+        return ValidationError(
+            message="The tyre has already reached its maximum degradation of 100%"
+        )
+
 
 class Trip(models.Model):
     id = models.AutoField(primary_key=True)
     distance = models.FloatField()
     distance_travelled = models.FloatField(default=0)
     finished = models.BooleanField(default=False)
-    car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name='trips')
+    car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name="trips")
 
     @property
-    def status(self,):
+    def status(self):
         return {
-            'id': self.id,
-            'distance': self.distance,
-            'distance_travelled': self.distance_travelled,
-            'finished': self.finished
+            "id": self.id,
+            "distance": self.distance,
+            "distance_travelled": self.distance_travelled,
+            "finished": self.finished,
         }
+
 
 class Maintenance(models.Model):
     id = models.AutoField(primary_key=True)
-    car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name='maintenances')
+    car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name="maintenances")
     date = models.DateTimeField(auto_now_add=True)
 
     @property
-    def status(self,):
-        return {
-            'id': self.id,
-            'date': self.date
-        }
+    def status(self):
+        return {"id": self.id, "date": self.date}
