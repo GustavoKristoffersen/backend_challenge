@@ -1,7 +1,6 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from car_maintenance.models import Car, Tyre
-import time
 
 class TestCarViewSet(TestCase):
     def setUp(self):
@@ -19,7 +18,6 @@ class TestCarViewSet(TestCase):
         
         response = self.client.post(url, **{'QUERY_STRING': f'distance={distance}'})
         response_body = response.json()
-        refuel_counter = 0
 
         while response.status_code != 201:
             car = Car.objects.get(id=1)
@@ -32,8 +30,7 @@ class TestCarViewSet(TestCase):
 
             if 'gas' in response_body.get('warning').get('message'):
                 car.refuel(50)
-                refuel_counter += 1
-                print(f'Refueled {refuel_counter} times')
+                print(f'Refueled {car.refuelings.count()} times')
 
             response = self.client.post(url)
             response_body = response.json()
@@ -42,9 +39,6 @@ class TestCarViewSet(TestCase):
 
         self.assertEquals(response.status_code, 201)
         self.assertEquals(response_body.get('trips')[0].get('distanceTravelled'), 10000)
-        
-
-
-
+        self.assertEquals(response_body.get('trips')[0].get('finished'), True)
 
         
