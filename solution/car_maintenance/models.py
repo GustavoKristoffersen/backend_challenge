@@ -51,6 +51,7 @@ class Car(models.Model):
             if self.gas_count_percentage < DEFAULT_CONDITION_TO_REFUEL:
                 self.gas_count += gas_quantity
                 self.save()
+                Refueling.objects.create(car=self, gas_amount=gas_quantity)
 
                 return self
 
@@ -88,10 +89,10 @@ class Car(models.Model):
 
         #Checks if the car can travel
         if not self.can_trip:
-            raise Exception('The car is not in condition to travel. Make sure that it has 4 tyres and gas > 0')
+            raise Exception('The car is not in condition to travel. Make sure it has 4 tyres and gas > 0')
 
-        trip = None
         # Checks whether this is a new trip or a continuation of the last one
+        trip = None
         is_new_trip = True
         for t in self.trips.all():
             if t.finished == False:
@@ -126,9 +127,7 @@ class Car(models.Model):
             self.gas_count -= DEFAULT_GAS_CONSUMPTION_PER_KM
 
             for tyre in self.tyres.all():
-                tyre.degrade(
-                    DEFAULT_DEGRADATION_PER_KM
-                )
+                tyre.degrade(DEFAULT_DEGRADATION_PER_KM)
                 if tyre.degradation >= 100:
                     has_degraded_tyres = True
 
@@ -199,4 +198,10 @@ class Trip(models.Model):
 class Maintenance(models.Model):
     id = models.AutoField(primary_key=True)
     car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name="maintenances")
+    date = models.DateTimeField(auto_now_add=True)
+
+class Refueling(models.Model):
+    id = models.AutoField(primary_key=True)
+    car = models.ForeignKey(Car, on_delete=models.CASCADE, related_name='refuelings')
+    gas_amount = models.FloatField()
     date = models.DateTimeField(auto_now_add=True)
