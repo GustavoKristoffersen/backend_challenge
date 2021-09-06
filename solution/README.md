@@ -1,5 +1,7 @@
 ## How to set up the project
 
+First, create and activate your virtual enviroment
+
 Clone this repository and then execute the following commands
 
 ```
