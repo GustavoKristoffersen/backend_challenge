@@ -5,26 +5,24 @@ First, create and activate your virtual enviroment
 Clone this repository and then execute the following commands
 
 ```
-    cd backend_challenge
+cd backend_challenge/solution
 
-    cd solution
+pip install -r requirements.txt
 
-    pip install -r requirements.txt
-
-    python manage.py migrate
+python manage.py migrate
 
 ```
 
 To run the project execute
 
 ```
-    python manage.py runserver
+python manage.py runserver
 ```
 
 To run the test execute
 
 ```
-    python manage.py test car_maintenance.tests
+python manage.py test car_maintenance.tests
 ```
 
 ### API
