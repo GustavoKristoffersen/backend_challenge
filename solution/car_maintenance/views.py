@@ -20,7 +20,11 @@ class CarViewSet(ModelViewSet):
 
     @action(methods=['POST'], detail=True)
     def trip(self, request, id, *args, **kwargs):
-        distance = int(request.query_params.get('distance'))
+        distance = request.query_params.get('distance')
+
+        if distance:
+            distance = int(distance)
+        
         car = Car.objects.get(id=id)
         try:
             car.trip(distance) if distance else car.trip()
@@ -28,12 +32,11 @@ class CarViewSet(ModelViewSet):
 
             return Response(data=serializer.data, status=status.HTTP_201_CREATED)
         
-        except Exception as e:
-            print(e)
-            return Response({'error': {'message': str(e)}}, status=status.HTTP_400_BAD_REQUEST)
-
         except ValidationError as e:
             return Response({'warning': {'message': e.message}}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error': {'message': str(e)}}, status=status.HTTP_400_BAD_REQUEST)
+
     
     @action(methods=['POST'], detail=True)
     def refuel(self, request, id, *args, **kwargs):
@@ -45,9 +48,7 @@ class CarViewSet(ModelViewSet):
         except ValidationError as e:
             return Response(data={'error': {'message': e.message}}, status=status.HTTP_400_BAD_REQUEST)
 
-        serializer = CarSerializer(car)
-
-        return Response(data=serializer.data, status=status.HTTP_201_CREATED)
+        return Response(data={'car_id': car.id, 'gas_count_percentage': car.gas_count_percentage})
     
     @action(methods=['POST'], detail=True)
     def maintain(self, request, id, *args, **kwargs):

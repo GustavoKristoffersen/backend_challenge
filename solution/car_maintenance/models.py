@@ -70,7 +70,7 @@ class Car(models.Model):
         :raises: ValidationError: if the tyre's degradation is not higher than {DEFAULT_CONDITION_TO_SWAP_TYRE}%.
         """
 
-        if tyre.degradation > DEFAULT_CONDITION_TO_SWAP_TYRE:
+        if tyre.is_degraded:
             tyre.delete()
             Tyre.createTyre(car=self)
             Maintenance.objects.create(car=self)
@@ -150,6 +150,10 @@ class Tyre(models.Model):
     @property
     def degradation_percentage(self):
         return self.degradation
+    
+    @property
+    def is_degraded(self):
+        return True if self.degradation > DEFAULT_CONDITION_TO_SWAP_TYRE else False
 
     @classmethod
     def createTyre(cls, car):
