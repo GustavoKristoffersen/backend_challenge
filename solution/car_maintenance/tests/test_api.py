@@ -12,7 +12,6 @@ class TestCarViewSet(TestCase):
             Tyre.createTyre(car=car)
 
         url = reverse('cars-trip', args=[car.id])
-        car = Car.objects.get(id=1)
 
         distance = 10000
         
