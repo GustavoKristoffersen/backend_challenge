@@ -41,10 +41,10 @@ class CarViewSet(ModelViewSet):
     @action(methods=['POST'], detail=True)
     def refuel(self, request, id, *args, **kwargs):
         car = Car.objects.get(id=id)
-        gas = int(request.query_params.get('gas'))
+        amount = int(request.query_params.get('amount'))
 
         try:
-            car.refuel(gas)
+            car.refuel(amount)
         except ValidationError as e:
             return Response(data={'error': {'message': e.message}}, status=status.HTTP_400_BAD_REQUEST)
 
